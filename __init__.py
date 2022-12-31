@@ -1,7 +1,7 @@
 import asyncio
 
 from nonebot import on_command, logger
-from nonebot.adapters.onebot.v11 import Message
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
 from nonebot.params import CommandArg
 
 from .api_get import get_pay_url, loop_check
@@ -38,7 +38,8 @@ async def preference_update(arg: Message = CommandArg()):
         await sv.finish("查询失败 code: " + str(result['code']))
 
     img_b64 = await img_create(result, pay_mode, show=False)
-    await sv.send(f"[CQ:image,file=base64://{img_b64}]请在2分钟内完成操作", at_sender=True)
+    await sv.send(MessageSegment.image(f"base64://{img_b64}") + MessageSegment.text("请在2分钟内完成操作"),
+                  at_sender=True)
     # loop.create_task  创建loop_check任务
     asyncio.create_task(loop_check(result, uid, sv))
 
@@ -58,4 +59,4 @@ item_id:
 but 6->30day card
     """.strip()
     img_b64 = await help_img_create(help_info)
-    await sv_help.finish(f"[CQ:image,file=base64://{img_b64}]", at_sender=True)
+    await sv_help.finish(MessageSegment.image(f"base64://{img_b64}"), at_sender=True)
