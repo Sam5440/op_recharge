@@ -6,7 +6,7 @@ from nonebot.permission import SUPERUSER
 from .api_get import get_pay_url
 from .img import img_create
 
-sv = on_command("op_recharge", aliases={"OP充值", "原充值"}, permission=SUPERUSER, priority=5, block=True)
+sv = on_command("op_recharge", aliases={"OP充值", "原充值"}, priority=5, block=True)
 
 
 @sv.handle()
@@ -20,7 +20,6 @@ async def preference_update(arg: Message = CommandArg()):
     except Exception as e:
         logger.error(e)
         await sv.finish("请输入正确的参数,如:op充值 商品id(0六元6月卡) uid 支付方式(0支付宝1微信)")
-        return
     logger.info(f"item_id:{item_id},uid:{uid},pay_mode:{pay_mode}")
     if item_id > 6:
         if uid == 0:
@@ -28,16 +27,13 @@ async def preference_update(arg: Message = CommandArg()):
             item_id = 0
         else:
             await sv.finish("请输入正确的参数,如:op充值 商品id(0六元6月卡) uid 支付方式(0支付宝1微信)")
-            return
     if not SUPERUSER:
         await sv.finish("只有管理员才可以充值哦")
-        return
 
     result = await get_pay_url(uid, item_id, pay_mode)
 
     if result['code'] != 200:
         await sv.finish("查询失败 code: " + str(result['code']))
-        return
 
     img_b64 = await img_create(result)
     await sv.finish(f"[CQ:image,file=base64://{img_b64}]")
