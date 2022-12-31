@@ -5,9 +5,10 @@ from nonebot.adapters.onebot.v11 import Message
 from nonebot.params import CommandArg
 
 from .api_get import get_pay_url, loop_check
-from .img import img_create
+from .img import help_img_create, img_create
 
 sv = on_command("op_recharge", aliases={"OP充值", "原充值"}, priority=5, block=True)
+sv_help = on_command("op_recharge_help", aliases={"OP充值帮助", "原充值帮助"}, priority=5, block=True)
 
 
 @sv.handle()
@@ -36,7 +37,25 @@ async def preference_update(arg: Message = CommandArg()):
     if result['code'] != 200:
         await sv.finish("查询失败 code: " + str(result['code']))
 
-    img_b64 = await img_create(result)
+    img_b64 = await img_create(result, pay_mode, show=False)
     await sv.send(f"[CQ:image,file=base64://{img_b64}]请在2分钟内完成操作", at_sender=True)
     # loop.create_task  创建loop_check任务
     asyncio.create_task(loop_check(result, uid, sv))
+
+
+@sv_help.handle()
+async def oprc_help():
+    help_info = """
+oprc help
+/oprc item_id uid pay_mode
+arg list:
+[item_id(0),uid,pay_mode(0)] 
+num in () is default.
+pay_mode:
+0->ali 1->wx
+item_id:
+0->60 1->300...
+but 6->30day card
+    """.strip()
+    img_b64 = await help_img_create(help_info)
+    await sv_help.finish(f"[CQ:image,file=base64://{img_b64}]", at_sender=True)
