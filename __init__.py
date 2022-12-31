@@ -14,7 +14,6 @@ sv_help = on_command("op_recharge_help", aliases={"OP充值帮助", "原充值�
 @sv.handle()
 async def preference_update(arg: Message = CommandArg()):
     args = arg.extract_plain_text().strip().split()
-    logger.info(args)
     try:
         item_id = int(args[0])
         uid = 0 if len(args) == 1 else int(args[1])
@@ -29,8 +28,6 @@ async def preference_update(arg: Message = CommandArg()):
             item_id = 0
         else:
             await sv.finish("请输入正确的参数,如:op充值 商品id(0六元6月卡) uid 支付方式(0支付宝1微信)")
-    # if not SUPERUSER:
-    #     await sv.finish("只有管理员才可以充值哦")
 
     result = await get_pay_url(uid, item_id, pay_mode)
 
@@ -40,7 +37,6 @@ async def preference_update(arg: Message = CommandArg()):
     img_b64 = await img_create(result, pay_mode, show=False)
     await sv.send(MessageSegment.image(f"base64://{img_b64}") + MessageSegment.text("请在2分钟内完成操作"),
                   at_sender=True)
-    # loop.create_task  创建loop_check任务
     asyncio.create_task(loop_check(result, uid, sv))
 
 

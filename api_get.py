@@ -34,7 +34,6 @@ async def loop_check(result, uid, sv):
     for _ in range(24):
         await asyncio.sleep(5)
         r = await check(result["order_id"], uid)
-        print(r)
         if r != "wait for pay":
             await sv.finish("充值成功", at_sender=True)
 
@@ -59,12 +58,10 @@ async def get_pay_url(
     r = requests.get(url)
 
     r_text = requests.get(url).text
-    print(r_text)
     result = {
         "query_url": url,
         "code": r.status_code,
     }
-    print(result)
     if result["code"] != 200:
         return result
     result["thing"] = await get_between(r_text, "        <h2>", '</h2><img src="')
