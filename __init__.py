@@ -16,10 +16,10 @@ async def preference_update(arg: Message = CommandArg()):
     try:
         item_id = int(args[0])
         uid = 0 if len(args) == 1 else int(args[1])
-        pay_mode = 0 if len(args) == 1 else int(args[2])
+        pay_mode = 0 if len(args) < 3 else int(args[2])
     except Exception as e:
         logger.error(e)
-        await sv.finish("请输入正确的参数,如:op充值 商品id(0六元6月卡) uid 支付方式(0支付宝1微信)")
+        await sv.finish("请输入正确的参数,如:op充值 商品id uid 支付方式(0支付宝1微信)")
     logger.info(f"item_id:{item_id},uid:{uid},pay_mode:{pay_mode}")
     if item_id > 6:
         if uid == 0:

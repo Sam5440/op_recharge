@@ -12,7 +12,7 @@ async def create_white_img():
     return img
 
 
-async def img_create(recharge_info: dict) -> Image:
+async def img_create(recharge_info: dict) -> str:
     img = await create_white_img()
     thing_img_url = recharge_info["thing_img_url"]
     if "alipay" in recharge_info["pay_url"]:
@@ -40,7 +40,7 @@ async def img_create(recharge_info: dict) -> Image:
     # 写入文字
     draw.text(
         (10, 20),
-        "商品:" + recharge_info["thing"].replace("for ", "For UID-"),
+        "商品:" + recharge_info["thing"].replace("for ", "For UID"),
         font=font,
         fill=(0, 0, 0),
     )
