@@ -35,7 +35,7 @@ def get_pay_url(
     r = requests.get(url)
 
     r_text = requests.get(url).text
-    print(r_text)
+    # print(r_text)
     result = {
         "query_url": url,
         "code": r.status_code,
