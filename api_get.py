@@ -2,6 +2,7 @@ import hashlib
 import os
 
 import requests
+from nonebot.utils import run_sync
 
 api = ""
 api_md5_ok = "fdbbfcd6f5049afc12a06da130e6657f"
@@ -16,8 +17,17 @@ if api_md5_ok != api_md5:
     exit()
 
 
-async def get_between(s, start, end):
+@run_sync
+def get_between(s, start, end):
     return (s.split(start)[1]).split(end)[0]
+
+
+@run_sync
+def check(order_id, uid):
+    # http://box.fuckmys.tk/check/1609168475074437120/123962012
+    url = f'{api.replace("topup/", "check/")}{str(order_id)}/{str(uid)}'
+    r_text = requests.get(url).text
+    return r_text
 
 
 async def get_pay_url(
