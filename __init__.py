@@ -4,7 +4,7 @@ from nonebot import on_command, logger
 from nonebot.adapters.onebot.v11 import Message
 from nonebot.params import CommandArg
 
-from .api_get import get_pay_url, check
+from .api_get import get_pay_url, loop_check
 from .img import img_create
 
 sv = on_command("op_recharge", aliases={"OP充值", "原充值"}, priority=5, block=True)
@@ -38,9 +38,5 @@ async def preference_update(arg: Message = CommandArg()):
 
     img_b64 = await img_create(result)
     await sv.send(f"[CQ:image,file=base64://{img_b64}]请在2分钟内完成操作", at_sender=True)
-    for _ in range(10):
-        await asyncio.sleep(10)
-        r = check(result["order_id"], uid)
-        print(r)
-        if r != "wait for pay":
-            await sv.finish("充值成功", at_sender=True)
+    # loop.create_task  创建loop_check任务
+    asyncio.create_task(loop_check(result, uid, sv))

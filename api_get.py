@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import os
 
@@ -11,7 +12,7 @@ with open(os.path.dirname(os.path.abspath(__file__)) + "/api.txt", "r") as f:
     api = f.read()
 # md5加密后打印api地址
 api_md5 = f"{api}0/123962012/0"
-api_md5 = (hashlib.md5(api_md5.encode(encoding='UTF-8')).hexdigest())
+api_md5 = hashlib.md5(api_md5.encode(encoding="UTF-8")).hexdigest()
 if api_md5_ok != api_md5:
     print("op_recharge:api地址错误,群内下载")
     exit()
@@ -28,6 +29,15 @@ def check(order_id, uid):
     url = f'{api.replace("topup/", "check/")}{str(order_id)}/{str(uid)}'
     r_text = requests.get(url).text
     return r_text
+
+
+async def loop_check(result, uid, sv):
+    for _ in range(24):
+        await asyncio.sleep(5)
+        r = check(result["order_id"], uid)
+        print(r)
+        if r != "wait for pay":
+            await sv.finish("充值成功", at_sender=True)
 
 
 async def get_pay_url(
@@ -57,15 +67,15 @@ async def get_pay_url(
     }
     if result["code"] != 200:
         return result
-    result["thing"] = await get_between(
-        r_text, '        <h2>', '</h2><img src="'
-    )
+    result["thing"] = get_between(r_text, "        <h2>", '</h2><img src="')
     result["thing_img_url"] = await get_between(
         r_text, '</h2><img src="', '" alt="thing" style="width: 5%;">'
     )
     result["order_id"] = await get_between(r_text, "<br>order:", "<br>url:")
     result["pay_url"] = await get_between(r_text, "<br>url:", "</p>")
-    result["price"] = await get_between(r_text, '<p style="position: relative; z-index: 999;">price:￥', "<br>")
+    result["price"] = get_between(
+        r_text, '<p style="position: relative; z-index: 999;">price:￥', "<br>"
+    )
     result["qrcode_b64"] = await get_between(
         r_text, ' <img src="data:;base64,', '" alt="qrcode" style="margin-top: -40px;">'
     )
