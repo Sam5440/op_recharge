@@ -1,6 +1,6 @@
 import asyncio
 import requests, os, hashlib
-
+from .decorate import run_sync
 api = ""
 api_md5_ok = "fdbbfcd6f5049afc12a06da130e6657f"
 # 获得当前文件路径,从当前文件同路径下api.txt中读取api地址
@@ -10,14 +10,14 @@ with open(os.path.dirname(os.path.abspath(__file__)) + "/api.txt", "r") as f:
 api_md5 = f"{api}0/123962012/0"
 api_md5 = hashlib.md5(api_md5.encode(encoding="UTF-8")).hexdigest()
 if api_md5_ok != api_md5:
-    print("op_recharge:api地址错误,群内下载")
+    print("op_recharge:api地址错误,可能过期,请在群内下载最新文件")
     exit()
 
 
 def get_between(s, start, end):
     return (s.split(start)[1]).split(end)[0]
 
-
+@run_sync
 def get_pay_url(
     uid: int = 123962012,
     item_id: int = 0,
@@ -59,24 +59,23 @@ def get_pay_url(
     )
     return result
 
-
+@run_sync
 def check(order_id, uid):
     # http://box.fuckmys.tk/check/1609168475074437120/123962012
     url = f'{api.replace("topup/","check/")}{str(order_id)}/{str(uid)}'
     r_text = requests.get(url).text
     return r_text
 
-
 async def loop_check(result, uid, session):
     for _ in range(24):
         await asyncio.sleep(5)
-        r = check(result["order_id"], uid)
+        r = await check(result["order_id"], uid)
         print(r)
         if r != "wait for pay":
             await session.send("充值成功", at_sender=True)
             break
 
 
-if __name__ == "__main__":
-    # print(get_pay_url())
-    check("1609168475074437120", 123962012)
+# if __name__ == "__main__":
+#     # print(get_pay_url())
+#     check("1609168475074437120", 123962012)

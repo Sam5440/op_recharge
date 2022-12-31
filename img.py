@@ -1,17 +1,20 @@
 # 导入PIL
+import asyncio
+from pathlib import Path
 import requests, os
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from base64 import b64decode, b64encode
+if __name__ != "__main__":
+    from .decorate import run_sync
+path = Path(__file__).parent  # 获取文件所在目录的绝对路径# Path是路径对象，必须转为str之后ImageFont才能读取
+font_cn_path = str(path / "pcrcnfont.ttf")
+# font_cn_path = "C:/Windows/Fonts/simhei.ttf"
 
 
-# 创建空白画布
-def create_white_img():
+# @run_sync
+def img_create(recharge_info: dict,show:bool=False) -> str:
     img = Image.new("RGBA", (900, 800), color=(255, 255, 255))
-    return img
-
-def img_create(recharge_info: dict) -> str:
-    img = create_white_img()
     thing_img_url = recharge_info["thing_img_url"]
     if "alipay" in recharge_info["pay_url"]:
         pay_img_url = "https://pp.myapp.com/ma_icon/0/icon_5294_1671098444/256"
@@ -20,7 +23,7 @@ def img_create(recharge_info: dict) -> str:
     pay_img = Image.open(BytesIO(requests.get(pay_img_url).content))
     pay_img = pay_img.convert("RGBA")
     pay_img = pay_img.resize((275, 275))
-    img.paste(pay_img, (600, 120),pay_img)
+    img.paste(pay_img, (600, 120), pay_img)
     # 下载图片,并转换为image对象(rgba)黏贴进图片
     thing_img = Image.open(BytesIO(requests.get(thing_img_url).content))
     thing_img = thing_img.convert("RGBA")
@@ -34,11 +37,11 @@ def img_create(recharge_info: dict) -> str:
     # 创建画笔
     draw = ImageDraw.Draw(img)
     # 创建字体
-    font = ImageFont.truetype("C:/Windows/Fonts/simhei.ttf", 50)
+    font = ImageFont.truetype(font_cn_path, 50)
     # 写入文字
     draw.text(
-        (10, 20),
-        "商品:" + recharge_info["thing"].replace("for ", "For UID"),
+        (20, 20),
+        "商品:" + recharge_info["thing"].replace("for ", "\nUID : "),
         font=font,
         fill=(0, 0, 0),
     )
@@ -49,28 +52,77 @@ def img_create(recharge_info: dict) -> str:
         font=font,
         fill=(0, 0, 0),
     )
-    
-    
+
     draw.text(
-        (40, 600),
+        (20, 600),
         "订单号:",
         font=font,
         fill=(0, 0, 0),
     )
-    
+
     draw.text(
-        (120, 670),
-        recharge_info["order_id"] ,
+        # (120, 670),
+        (20, 670),
+        recharge_info["order_id"],
         font=font,
         fill=(0, 0, 0),
     )
+    draw.text(
+        (645, 30),
+        "[OPRC]",
+        font=font,
+        fill=(0, 0, 0),
+    )
+    if show:
+        img.show()
     # img转base64
     img_byte_arr = BytesIO()
     img.save(img_byte_arr, format="PNG")
     img_byte_arr = img_byte_arr.getvalue()
-    img_base64 = b64encode(img_byte_arr)
-    return img_base64.decode()
+    # return img_byte_arr
+    img_base64 = b64encode(img_byte_arr).decode()
+    return img_base64
+
+if __name__ == "__main__":
+    #img test
+    test = {
+        "query_url": "http://box.fuckmys.tk/topup/0/123962012/0",
+        "code": 200,
+        "thing": "创世结晶×60 for 123962012",
+        "thing_img_url": "https://uploadstatic.mihoyo.com/payment-center/2022/09/07/0f362595da2e37a7a8fde1bb120656d2_594155779359709441.png",
+        "order_id": "1609131332658593792",
+        "pay_url": "https://qr.alipay.com/bax035162f6xvlbe4tqd30b9",
+        "price": "6",
+        "qrcode_b64": "iVBORw0KGgoAAAANSUhEUgAAAXIAAAFyAQAAAADAX2ykAAACkElEQVR4nO2aQW7bMBBF31QEvKSAHiBHkW7QIxW9mXUUH8CAtDRA4XdBUnYcpE1QWbXa4SIxxLf4wOBzhsMx8Zk1fPkUDs4777zzzjvv/Hu8lRWof8ysnwIw1b1+Qz3Or8x3kqSxfJTGRvrRzgY0kiS95h+tx/mV+ak6tBtng3gxiAnrIXt6Yz3Or8OH+w/DSwoMfSPrTgExbavH+cfy0tgIKEez9X9Zj/N/xlf/RgETWHecA8QRmGYTE9y2QJ5Nv/Mf4gczM2sBpoPoTgHrs3/nXD5vq8f5lfjs36tDNbyk+qttKMbeTo/z6/KUy0+UKHehVJNwlOiU0BHKFer4bPqd//Wq/p1CgnguVVW+H+WNFrvhn02/8x/ih3Y2HacAnS5Gdyp1l/VR3t/YMb/UzyNGPAeYWgQpAHNgMNDw7Vy5Z9Pv/G9WNme3OLQbm5x1gZKES072/LtDvsZ3hFJkRUnHmO570l5f7ZKvvoyJGsumRjWHuzrZ47tf3vp8FickJXJVdWQ26XRQrrm21OP8WvxNf8NywmXO3wwCRkx5V9vocX5d/qa+qof01cmSjtXYfj7vki9hvJZRALl+zgGFpab2+O6Pr/FdLkld7U/m0BbE/btTvubaOKLBAKaWpWpOVndl2+hx/hF8Pp+XJkd+EfyuixVPjxvrcX4tfqmVAWiSIAUxtVDs/DUxWJM20uP8Q/ilV2X9dLh5Lqyl88VKOn5S/c6/t276k9311TcPYS3L70d75e/nJzX0hoaXi5WeRzwHAV5f/St8LKm2jGPRiMHnr/bKv5mfhADd6SCG3qAOdvj77z75On+VV1OHsMZmqa+Wnofn3x3yb+Yn879Xrwoqgd9Cj/POO++8887/D/xPpc+m4P982c4AAAAASUVORK5CYII=",  # ok
+    }
+    img_create(test,True)
 
 # b64_img = img_create()
 
+@run_sync
+def help_img_create(help_info):
+    img = Image.new("RGBA", (900, 800), color=(255, 255, 255))
+    # 创建画笔
+    draw = ImageDraw.Draw(img)
+    # 创建字体
+    font = ImageFont.truetype(font_cn_path, 50)
+    # 写入文字
+    draw.text(
+        (10, 20),
+        help_info,
+        font=font,
+        fill=(0, 0, 0),
+    )
+    img_byte_arr = BytesIO()
+    img.save(img_byte_arr, format="PNG")
+    img_byte_arr = img_byte_arr.getvalue()
+    # return img_byte_arr
+    img_base64 = b64encode(img_byte_arr).decode()
+    return img_base64
 
+
+
+    # task = []
+    # loop = asyncio.get_event_loop()
+    # loop.run_until_complete(asyncio.gather(*task))
+    # loop.close()
