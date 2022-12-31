@@ -1,4 +1,8 @@
-import requests,os,hashlib
+import hashlib
+import os
+
+import requests
+
 api = ""
 api_md5_ok = "fdbbfcd6f5049afc12a06da130e6657f"
 # 获得当前文件路径,从当前文件同路径下api.txt中读取api地址
@@ -11,14 +15,15 @@ if api_md5_ok != api_md5:
     print("op_recharge:api地址错误,群内下载")
     exit()
 
-def get_between(s, start, end):
+
+async def get_between(s, start, end):
     return (s.split(start)[1]).split(end)[0]
 
 
-def get_pay_url(
-    uid: int = 123962012,
-    item_id: int = 0,
-    pay_mode: int = 0,
+async def get_pay_url(
+        uid: int = 123962012,
+        item_id: int = 0,
+        pay_mode: int = 0,
 ) -> dict:
     """_summary_
 
@@ -42,20 +47,16 @@ def get_pay_url(
     }
     if result["code"] != 200:
         return result
-    result["thing"] = get_between(
+    result["thing"] = await get_between(
         r_text, '        <h2>', '</h2><img src="'
     )
-    result["thing_img_url"] = get_between(
+    result["thing_img_url"] = await get_between(
         r_text, '</h2><img src="', '" alt="thing" style="width: 5%;">'
     )
-    result["order_id"] = get_between(r_text, "<br>order:", "<br>url:")
-    result["pay_url"] = get_between(r_text, "<br>url:", "</p>")
-    result["price"] = get_between(r_text, '<p style="position: relative; z-index: 999;">price:￥', "<br>")
-    result["qrcode_b64"] = get_between(
+    result["order_id"] = await get_between(r_text, "<br>order:", "<br>url:")
+    result["pay_url"] = await get_between(r_text, "<br>url:", "</p>")
+    result["price"] = await get_between(r_text, '<p style="position: relative; z-index: 999;">price:￥', "<br>")
+    result["qrcode_b64"] = await get_between(
         r_text, ' <img src="data:;base64,', '" alt="qrcode" style="margin-top: -40px;">'
     )
     return result
-
-
-if __name__ == "__main__":
-    print(get_pay_url())

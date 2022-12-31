@@ -1,35 +1,19 @@
 # 导入PIL
-import requests, os
-from PIL import Image, ImageDraw, ImageFont
-from io import BytesIO
 from base64 import b64decode, b64encode
+from io import BytesIO
+
+import requests
+from PIL import Image, ImageDraw, ImageFont
 
 
 # 创建空白画布
-def create_white_img():
+async def create_white_img():
     img = Image.new("RGBA", (900, 800), color=(255, 255, 255))
     return img
 
 
-test = {
-    "query_url": "http://box.fuckmys.tk/topup/0/123962012/0",
-    "code": 200,
-    # ok
-    "thing": "创世结晶×60 for 123962012",
-    # ok
-    "thing_img_url": "https://uploadstatic.mihoyo.com/payment-center/2022/09/07/0f362595da2e37a7a8fde1bb120656d2_594155779359709441.png",
-    "order_id": "1609131332658593792",
-    # ok
-    "pay_url": "https://qr.alipay.com/bax035162f6xvlbe4tqd30b9",
-    #
-    "price": "6",
-    # ok
-    "qrcode_b64": "iVBORw0KGgoAAAANSUhEUgAAAXIAAAFyAQAAAADAX2ykAAACkElEQVR4nO2aQW7bMBBF31QEvKSAHiBHkW7QIxW9mXUUH8CAtDRA4XdBUnYcpE1QWbXa4SIxxLf4wOBzhsMx8Zk1fPkUDs4777zzzjvv/Hu8lRWof8ysnwIw1b1+Qz3Or8x3kqSxfJTGRvrRzgY0kiS95h+tx/mV+ak6tBtng3gxiAnrIXt6Yz3Or8OH+w/DSwoMfSPrTgExbavH+cfy0tgIKEez9X9Zj/N/xlf/RgETWHecA8QRmGYTE9y2QJ5Nv/Mf4gczM2sBpoPoTgHrs3/nXD5vq8f5lfjs36tDNbyk+qttKMbeTo/z6/KUy0+UKHehVJNwlOiU0BHKFer4bPqd//Wq/p1CgnguVVW+H+WNFrvhn02/8x/ih3Y2HacAnS5Gdyp1l/VR3t/YMb/UzyNGPAeYWgQpAHNgMNDw7Vy5Z9Pv/G9WNme3OLQbm5x1gZKES072/LtDvsZ3hFJkRUnHmO570l5f7ZKvvoyJGsumRjWHuzrZ47tf3vp8FickJXJVdWQ26XRQrrm21OP8WvxNf8NywmXO3wwCRkx5V9vocX5d/qa+qof01cmSjtXYfj7vki9hvJZRALl+zgGFpab2+O6Pr/FdLkld7U/m0BbE/btTvubaOKLBAKaWpWpOVndl2+hx/hF8Pp+XJkd+EfyuixVPjxvrcX4tfqmVAWiSIAUxtVDs/DUxWJM20uP8Q/ilV2X9dLh5Lqyl88VKOn5S/c6/t276k9311TcPYS3L70d75e/nJzX0hoaXi5WeRzwHAV5f/St8LKm2jGPRiMHnr/bKv5mfhADd6SCG3qAOdvj77z75On+VV1OHsMZmqa+Wnofn3x3yb+Yn879Xrwoqgd9Cj/POO++8887/D/xPpc+m4P982c4AAAAASUVORK5CYII=",  # ok
-}
-
-
-def img_create(recharge_info: dict = test) -> Image:
-    img = create_white_img()
+async def img_create(recharge_info: dict) -> Image:
+    img = await create_white_img()
     thing_img_url = recharge_info["thing_img_url"]
     if "alipay" in recharge_info["pay_url"]:
         pay_img_url = "https://pp.myapp.com/ma_icon/0/icon_5294_1671098444/256"
@@ -38,7 +22,7 @@ def img_create(recharge_info: dict = test) -> Image:
     pay_img = Image.open(BytesIO(requests.get(pay_img_url).content))
     pay_img = pay_img.convert("RGBA")
     pay_img = pay_img.resize((275, 275))
-    img.paste(pay_img, (600, 120),pay_img)
+    img.paste(pay_img, (600, 120), pay_img)
     # 下载图片,并转换为image对象(rgba)黏贴进图片
     thing_img = Image.open(BytesIO(requests.get(thing_img_url).content))
     thing_img = thing_img.convert("RGBA")
@@ -67,8 +51,7 @@ def img_create(recharge_info: dict = test) -> Image:
         font=font,
         fill=(0, 0, 0),
     )
-    
-    
+
     draw.text(
         (40, 600),
         "订单号:",
@@ -88,7 +71,3 @@ def img_create(recharge_info: dict = test) -> Image:
     img_byte_arr = img_byte_arr.getvalue()
     img_base64 = b64encode(img_byte_arr)
     return img_base64.decode()
-
-# b64_img = img_create()
-
-
