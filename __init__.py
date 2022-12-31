@@ -1,12 +1,13 @@
-from .api_get import get_pay_url
+import asyncio
+from .api_get import get_pay_url,check
 from hoshino import Service
 from hoshino.priv import check_priv, ADMIN
 from .img import img_create
 
-sv = Service("opc",enable_on_default=False,visible=False)
+sv = Service("op_recharge")
 
 
-@sv.on_command("opc", aliases=("OP充值", "op充值"))
+@sv.on_command("oprc", aliases=("OP充值", "op充值"))
 async def preference_update(session):
     args = session.current_arg_text.strip().split()
     print(args)
@@ -27,9 +28,9 @@ async def preference_update(session):
             await session.send("请输入正确的参数,如:op充值 商品id(0六元6月卡) uid 支付方式(0支付宝1微信)")
             return
         
-    if not check_priv(session.event, ADMIN):
-        await session.send("只有管理员才可以充值哦")
-        return
+    # if not check_priv(session.event, ADMIN):
+    #     await session.send("只有管理员才可以充值哦")
+    #     return
 
     result = get_pay_url(uid, item_id, pay_mode)
 
@@ -38,4 +39,12 @@ async def preference_update(session):
         return
 
     img_b64 = img_create(result)
-    await session.send(f"[CQ:image,file=base64://{img_b64}]")
+    await session.send(f"[CQ:image,file=base64://{img_b64}]请在2分钟内完成操作")
+    for _ in range(10):
+        await asyncio.sleep(10)
+        r = check(result["order_id"], uid)
+        print(r)
+        if r!= "wait for pay":
+            await session.send("充值成功")
+            return
+            break

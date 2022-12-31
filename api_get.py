@@ -56,6 +56,14 @@ def get_pay_url(
     )
     return result
 
-
+def check(order_id,uid):
+        # http://box.fuckmys.tk/check/1609168475074437120/123962012
+    url = f'{api.replace("topup/","check/")}{str(order_id)}/{str(uid)}'
+    print(url)
+    # r = requests.get(url)
+    r_text = requests.get(url).text
+    print(r_text)
+    return r_text
 if __name__ == "__main__":
-    print(get_pay_url())
+    # print(get_pay_url())
+    check("1609168475074437120",123962012)
