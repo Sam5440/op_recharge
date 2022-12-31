@@ -39,12 +39,12 @@ async def preference_update(session):
         return
 
     img_b64 = img_create(result)
-    await session.send(f"[CQ:image,file=base64://{img_b64}]请在2分钟内完成操作")
+    await session.send(f"[CQ:image,file=base64://{img_b64}]请在2分钟内完成操作",at_sender = True)
     for _ in range(10):
         await asyncio.sleep(10)
         r = check(result["order_id"], uid)
         print(r)
         if r!= "wait for pay":
-            await session.send("充值成功")
+            await session.send("充值成功",at_sender = True)
             return
             break
