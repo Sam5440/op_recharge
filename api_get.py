@@ -1,6 +1,10 @@
 import asyncio
-import requests, os, hashlib
-from .decorate import run_sync
+import hashlib
+import os
+
+import requests
+from nonebot.utils import run_sync
+
 api = ""
 api_md5_ok = "fdbbfcd6f5049afc12a06da130e6657f"
 # 获得当前文件路径,从当前文件同路径下api.txt中读取api地址
@@ -14,14 +18,31 @@ if api_md5_ok != api_md5:
     exit()
 
 
-def get_between(s, start, end):
+async def get_between(s, start, end):
     return (s.split(start)[1]).split(end)[0]
 
+
 @run_sync
-def get_pay_url(
-    uid: int = 123962012,
-    item_id: int = 0,
-    pay_mode: int = 0,
+def check(order_id, uid):
+    # http://box.fuckmys.tk/check/1609168475074437120/123962012
+    url = f'{api.replace("topup/", "check/")}{str(order_id)}/{str(uid)}'
+    r_text = requests.get(url).text
+    return r_text
+
+
+async def loop_check(result, uid, sv):
+    for _ in range(24):
+        await asyncio.sleep(5)
+        r = await check(result["order_id"], uid)
+        print(r)
+        if r != "wait for pay":
+            await sv.finish("充值成功", at_sender=True)
+
+
+async def get_pay_url(
+        uid: int = 123962012,
+        item_id: int = 0,
+        pay_mode: int = 0,
 ) -> dict:
     """_summary_
 
@@ -38,44 +59,24 @@ def get_pay_url(
     r = requests.get(url)
 
     r_text = requests.get(url).text
-    # print(r_text)
+    print(r_text)
     result = {
         "query_url": url,
         "code": r.status_code,
     }
+    print(result)
     if result["code"] != 200:
         return result
-    result["thing"] = get_between(r_text, "        <h2>", '</h2><img src="')
-    result["thing_img_url"] = get_between(
+    result["thing"] = await get_between(r_text, "        <h2>", '</h2><img src="')
+    result["thing_img_url"] = await get_between(
         r_text, '</h2><img src="', '" alt="thing" style="width: 5%;">'
     )
-    result["order_id"] = get_between(r_text, "<br>order:", "<br>url:")
-    result["pay_url"] = get_between(r_text, "<br>url:", "</p>")
-    result["price"] = get_between(
+    result["order_id"] = await get_between(r_text, "<br>order:", "<br>url:")
+    result["pay_url"] = await get_between(r_text, "<br>url:", "</p>")
+    result["price"] = await get_between(
         r_text, '<p style="position: relative; z-index: 999;">price:￥', "<br>"
     )
-    result["qrcode_b64"] = get_between(
+    result["qrcode_b64"] = await get_between(
         r_text, ' <img src="data:;base64,', '" alt="qrcode" style="margin-top: -40px;">'
     )
     return result
-
-@run_sync
-def check(order_id, uid):
-    # http://box.fuckmys.tk/check/1609168475074437120/123962012
-    url = f'{api.replace("topup/","check/")}{str(order_id)}/{str(uid)}'
-    r_text = requests.get(url).text
-    return r_text
-
-async def loop_check(result, uid, session):
-    for _ in range(24):
-        await asyncio.sleep(5)
-        r = await check(result["order_id"], uid)
-        print(r)
-        if r != "wait for pay":
-            await session.send("充值成功", at_sender=True)
-            break
-
-
-# if __name__ == "__main__":
-#     # print(get_pay_url())
-#     check("1609168475074437120", 123962012)
