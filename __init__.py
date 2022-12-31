@@ -1,5 +1,5 @@
 import asyncio
-from .api_get import get_pay_url,check
+from .api_get import get_pay_url, loop_check
 from hoshino import Service
 from hoshino.priv import check_priv, ADMIN
 from .img import img_create
@@ -17,7 +17,7 @@ async def preference_update(session):
         pay_mode = 0 if len(args) < 3 else int(args[2])
     except Exception as e:
         print(e)
-        await session.send("请输入正确的参数,如:opc 商品id uid 支付方式(0支付宝1微信)")
+        await session.send("请输入正确的参数,如:oprc 商品id uid 支付方式(0or1)")
         return
     print(item_id, uid, pay_mode)
     if item_id > 6:
@@ -40,11 +40,6 @@ async def preference_update(session):
 
     img_b64 = img_create(result)
     await session.send(f"[CQ:image,file=base64://{img_b64}]请在2分钟内完成操作",at_sender = True)
-    for _ in range(10):
-        await asyncio.sleep(10)
-        r = check(result["order_id"], uid)
-        print(r)
-        if r!= "wait for pay":
-            await session.send("充值成功",at_sender = True)
-            return
-            break
+    # loop.create_task  创建loop_check任务
+    asyncio.create_task(loop_check(result, uid, session))
+
