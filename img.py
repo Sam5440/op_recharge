@@ -12,7 +12,7 @@ font_cn_path = str(path / "pcrcnfont.ttf")
 # font_cn_path = "C:/Windows/Fonts/simhei.ttf"
 
 
-# @run_sync
+@run_sync
 def img_create(recharge_info: dict,show:bool=False) -> str:
     img = Image.new("RGBA", (900, 800), color=(255, 255, 255))
     thing_img_url = recharge_info["thing_img_url"]
