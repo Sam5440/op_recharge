@@ -35,7 +35,7 @@ def get_pay_url(
     r = requests.get(url)
 
     r_text = requests.get(url).text
-    # print(r)
+    print(r_text)
     result = {
         "query_url": url,
         "code": r.status_code,
@@ -43,19 +43,19 @@ def get_pay_url(
     if result["code"] != 200:
         return result
     result["thing"] = get_between(
-        r_text, '<h1 style="display: inline-block;">', "</h1>"
+        r_text, '        <h2>', '</h2><img src="'
     )
     result["thing_img_url"] = get_between(
-        r_text, '</h1><img src="', '" alt="thing" style="width: 5%;">'
+        r_text, '</h2><img src="', '" alt="thing" style="width: 5%;">'
     )
-    result["order_id"] = get_between(r_text, "<p>order:", "<br>url:")
-    result["pay_url"] = get_between(r_text, "<br>url:", "<br>price:")
-    result["price"] = get_between(r_text, "<br>price:￥", "</p>")
+    result["order_id"] = get_between(r_text, "<br>order:", "<br>url:")
+    result["pay_url"] = get_between(r_text, "<br>url:", "</p>")
+    result["price"] = get_between(r_text, '<p style="position: relative; z-index: 999;">price:￥', "<br>")
     result["qrcode_b64"] = get_between(
-        r_text, ' <img src="data:;base64,', '",alt="qrcode">'
+        r_text, ' <img src="data:;base64,', '" alt="qrcode" style="margin-top: -40px;">'
     )
     return result
 
 
-# if __name__ == "__main__":
-#     print(get_pay_url())
+if __name__ == "__main__":
+    print(get_pay_url())
