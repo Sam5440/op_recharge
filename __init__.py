@@ -7,42 +7,66 @@ from nonebot.params import CommandArg
 from .api_get import get_pay_url, loop_check
 from .img import help_img_create, img_create
 
-sv = on_command("op_recharge", aliases={"OP充值", "原充值"}, priority=5, block=True)
-sv_help = on_command("op_recharge_help", aliases={"OP充值帮助", "原充值帮助"}, priority=5, block=True)
+sv = on_command("op_recharge", aliases={"oprc","OP充值", "原充值"}, priority=5, block=True)
+sv_help = on_command("op_recharge_help", aliases={"oprchelp", "oprc帮助"}, priority=5, block=True)
+
 
 
 @sv.handle()
 async def preference_update(arg: Message = CommandArg()):
     args = arg.extract_plain_text().strip().split()
+    # if not check_priv(session.event, ADMIN):
+    #     await session.send("只有管理员才可以充值哦")
+    #     return
+
     try:
         item_id = int(args[0])
         uid = 0 if len(args) == 1 else int(args[1])
         pay_mode = 0 if len(args) < 3 else int(args[2])
     except Exception as e:
-        logger.error(e)
-        await sv.finish("请输入正确的参数,如:op充值 商品id uid 支付方式(0支付宝1微信)")
-    logger.info(f"item_id:{item_id},uid:{uid},pay_mode:{pay_mode}")
+        print("[OPRC]", f"在接受充值参数时出现错误: {e}")
+        await sv.send("请输入正确的参数,输入oprchelp查看帮助")
+        return
+
     if item_id > 6:
-        if uid == 0:
+        if uid in [0, 1]:
+            pay_mode = uid
             uid = item_id
             item_id = 0
         else:
-            await sv.finish("请输入正确的参数,如:op充值 商品id(0六元6月卡) uid 支付方式(0支付宝1微信)")
+            await sv.send("请输入正确的参数,输入oprchelp查看帮助")
+            return
+    if (
+        (9999_9999 < uid < 3_9999_9999)
+        and (item_id in [0, 1, 2, 3, 4, 5, 6])
+        and (pay_mode in [0, 1])
+    ):
+        # 参数校验成功
+        pass
+    else:
+        await sv.send("请输入正确的参数,输入oprchelp查看帮助")
+        return
+    print("[OPRC]", f"请求物品ID{item_id}(UID{uid}),支付方式{pay_mode}的支付地址")
+    try:
+        result = await get_pay_url(uid, item_id, pay_mode)
+    except Exception as e:
+        print("[OPRC]", f"在请求时出现错误: {e}")
+        await sv.send("请求失败,请查看后台输出")
+        return
+    print("[OPRC]", f"请求物品ID{item_id}(UID{uid}),支付方式{pay_mode}的支付地址成功")
+    if result["code"] != 200:
+        await sv.send("查询失败 code: " + str(result["code"]))
+        return
 
-    result = await get_pay_url(uid, item_id, pay_mode)
-
-    if result['code'] != 200:
-        await sv.finish("查询失败 code: " + str(result['code']))
-
-    img_b64 = await img_create(result, pay_mode, show=False)
-    await sv.send(MessageSegment.image(f"base64://{img_b64}") + MessageSegment.text("请在2分钟内完成操作"),
-                  at_sender=True)
+    img_b64 = await img_create(result)
+    sv.send(MessageSegment.image(f"base64://{img_b64}") + MessageSegment.text("请在2分钟内完成操作"),at_sender=True)
     asyncio.create_task(loop_check(result, uid, sv))
 
 
 @sv_help.handle()
 async def oprc_help():
     help_info = """
+[Load Success]
 oprc help
 /oprc item_id uid pay_mode
 arg list:
@@ -55,4 +79,4 @@ item_id:
 but 6->30day card
     """.strip()
     img_b64 = await help_img_create(help_info)
-    await sv_help.finish(MessageSegment.image(f"base64://{img_b64}"), at_sender=True)
+    await sv_help.send(MessageSegment.image(f"base64://{img_b64}"), at_sender=True)
