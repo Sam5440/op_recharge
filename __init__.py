@@ -59,7 +59,7 @@ async def preference_update(arg: Message = CommandArg()):
         return
 
     img_b64 = await img_create(result)
-    sv.send(MessageSegment.image(f"base64://{img_b64}") + MessageSegment.text("请在2分钟内完成操作"),at_sender=True)
+    await sv.send(MessageSegment.image(f"base64://{img_b64}") + MessageSegment.text("请在2分钟内完成操作"),at_sender=True)
     asyncio.create_task(loop_check(result, uid, sv))
 
 
