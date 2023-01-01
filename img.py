@@ -13,9 +13,8 @@ font_cn_path = str(path / "pcrcnfont.ttf")
 
 
 @run_sync
-def img_create(recharge_info: dict,show:bool=False) -> str:
+def img_create(recharge_info: dict, show: bool = False) -> str:
     img = Image.new("RGBA", (900, 800), color=(255, 255, 255))
-    thing_img_url = recharge_info["thing_img_url"]
     if "alipay" in recharge_info["pay_url"]:
         pay_img_url = "https://pp.myapp.com/ma_icon/0/icon_5294_1671098444/256"
     else:
@@ -25,10 +24,14 @@ def img_create(recharge_info: dict,show:bool=False) -> str:
     pay_img = pay_img.resize((275, 275))
     img.paste(pay_img, (600, 120), pay_img)
     # 下载图片,并转换为image对象(rgba)黏贴进图片
-    thing_img = Image.open(BytesIO(requests.get(thing_img_url).content))
+    thing_img = Image.open(
+        BytesIO(requests.get(recharge_info["thing_img_url"]).content)
+    )
     thing_img = thing_img.convert("RGBA")
-    thing_img = thing_img.resize((600, 600))
-    img.paste(thing_img, (-20, 40), thing_img)
+    # thing_img = thing_img.resize((600, 600))
+    # img.paste(thing_img, (-20, 40), thing_img)
+    thing_img = thing_img.resize((500, 500))
+    img.paste(thing_img, (25, 145), thing_img)
     # 把recharge_info['qrcode_b64']转图片缩放成300*300,粘贴到img左下角
     img_qrcode = Image.open(BytesIO(b64decode(recharge_info["qrcode_b64"])))
     img_qrcode = img_qrcode.resize((300, 300))
@@ -45,16 +48,16 @@ def img_create(recharge_info: dict,show:bool=False) -> str:
         font=font,
         fill=(0, 0, 0),
     )
-
+    len_price = len(recharge_info["price"])*13
     draw.text(
-        (650, 450),
+        (660-len_price, 450),
         "价格:" + recharge_info["price"] + "元",
         font=font,
         fill=(0, 0, 0),
     )
 
     draw.text(
-        (20, 600),
+        (20, 650),
         "订单号:",
         font=font,
         fill=(0, 0, 0),
@@ -62,7 +65,7 @@ def img_create(recharge_info: dict,show:bool=False) -> str:
 
     draw.text(
         # (120, 670),
-        (20, 670),
+        (20, 715),
         recharge_info["order_id"],
         font=font,
         fill=(0, 0, 0),
@@ -75,6 +78,8 @@ def img_create(recharge_info: dict,show:bool=False) -> str:
     )
     if show:
         img.show()
+    # 转rgb通道
+    img = img.convert("RGB")
     # img转base64
     img_byte_arr = BytesIO()
     img.save(img_byte_arr, format="PNG")
@@ -82,7 +87,6 @@ def img_create(recharge_info: dict,show:bool=False) -> str:
     # return img_byte_arr
     img_base64 = b64encode(img_byte_arr).decode()
     return img_base64
-
 if __name__ == "__main__":
     #img test
     test = {

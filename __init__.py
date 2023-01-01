@@ -1,4 +1,6 @@
 import asyncio
+
+# from utils import logger
 from .api_get import get_pay_url, loop_check
 from hoshino import Service
 from hoshino.priv import check_priv, ADMIN
@@ -10,42 +12,59 @@ sv = Service("op_recharge")
 @sv.on_command("oprc", aliases=("OP充值", "op充值"))
 async def oprc(session):
     args = session.current_arg_text.strip().split()
-    print(args)
+    # if not check_priv(session.event, ADMIN):
+    #     await session.send("只有管理员才可以充值哦")
+    #     return
+
     try:
         item_id = int(args[0])
         uid = 0 if len(args) == 1 else int(args[1])
         pay_mode = 0 if len(args) < 3 else int(args[2])
     except Exception as e:
-        print(e)
-        await session.send("请输入正确的参数,如:oprc 商品id uid 支付方式(0or1)")
+        print("[OPRC]", f"在接受充值参数时出现错误: {e}")
+        await session.send("请输入正确的参数,输入oprchelp查看帮助")
         return
-    print(item_id, uid, pay_mode)
+
     if item_id > 6:
-        if uid == 0:
+        if uid in [0, 1]:
+            pay_mode = uid
             uid = item_id
             item_id = 0
         else:
-            await session.send("请输入正确的参数,如:op充值 商品id(0六元6月卡) uid 支付方式(0支付宝1微信)")
+            await session.send("请输入正确的参数,输入oprchelp查看帮助")
             return
-        
-    # if not check_priv(session.event, ADMIN):
-    #     await session.send("只有管理员才可以充值哦")
-    #     return
-
-    result = await get_pay_url(uid, item_id, pay_mode)
-
+    if (
+        (9999_9999 < uid < 3_9999_9999)
+        and (item_id in [0, 1, 2, 3, 4, 5, 6])
+        and (pay_mode in [0, 1])
+    ):
+        # 参数校验成功
+        pass
+    else:
+        await session.send("请输入正确的参数,输入oprchelp查看帮助")
+        return
+    print("[OPRC]", f"请求物品ID{item_id}(UID{uid}),支付方式{pay_mode}的支付地址")
+    try:
+        result = await get_pay_url(uid, item_id, pay_mode)
+    except Exception as e:
+        print("[OPRC]", f"在请求时出现错误: {e}")
+        await session.send("请求失败,请查看后台输出")
+        return
+    print("[OPRC]", f"请求物品ID{item_id}(UID{uid}),支付方式{pay_mode}的支付地址成功")
     if result["code"] != 200:
         await session.send("查询失败 code: " + str(result["code"]))
         return
 
     img_b64 = await img_create(result)
-    await session.send(f"[CQ:image,file=base64://{img_b64}]请在2分钟内完成操作",at_sender = True)
+    await session.send(f"[CQ:image,file=base64://{img_b64}]请在2分钟内完成操作", at_sender=True)
     # loop.create_task  创建loop_check任务
     asyncio.create_task(loop_check(result, uid, session))
 
-@sv.on_command("oprc帮助", aliases=("oprchelp", "oprcshop"))
+
+@sv.on_command("oprchelp", aliases=("oprc帮助"))
 async def oprc_help(session):
     help_info = """
+[Load Success]
 oprc help
 /oprc item_id uid pay_mode
 arg list:
@@ -58,4 +77,4 @@ item_id:
 but 6->30day card
     """.strip()
     img_b64 = await help_img_create(help_info)
-    await session.send(f"[CQ:image,file=base64://{img_b64}]",at_sender = True)
+    await session.send(f"[CQ:image,file=base64://{img_b64}]", at_sender=True)

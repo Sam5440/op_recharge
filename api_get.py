@@ -10,7 +10,7 @@ with open(os.path.dirname(os.path.abspath(__file__)) + "/api.txt", "r") as f:
 api_md5 = f"{api}0/123962012/0"
 api_md5 = hashlib.md5(api_md5.encode(encoding="UTF-8")).hexdigest()
 if api_md5_ok != api_md5:
-    print("op_recharge:api地址错误,可能过期,请在群内下载最新文件")
+    print("[OPRC]","op_recharge的api地址错误,可能过期,请在群内下载最新文件")
     exit()
 
 
@@ -70,7 +70,7 @@ async def loop_check(result, uid, session):
     for _ in range(24):
         await asyncio.sleep(5)
         r = await check(result["order_id"], uid)
-        print(r)
+        # print(r)
         if r != "wait for pay":
             await session.send("充值成功", at_sender=True)
             break
