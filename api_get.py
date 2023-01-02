@@ -36,15 +36,15 @@ def get_pay_url(
     uid, item_id, pay_mode = str(uid), str(item_id), str(pay_mode)
     url = f"{api}{item_id}/{uid}/{pay_mode}"
     r = requests.get(url)
-
-    r_text = requests.get(url).text
-    # print(r_text)
     result = {
         "query_url": url,
         "code": r.status_code,
     }
     if result["code"] != 200:
         return result
+    r_text = r.text
+    # print(r_text)
+    
     result["thing"] = get_between(r_text, "        <h2>", '</h2><img src="')
     result["thing_img_url"] = get_between(
         r_text, '</h2><img src="', '" alt="thing" style="width: 5%;">'
