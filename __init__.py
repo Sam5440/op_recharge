@@ -25,7 +25,7 @@ async def oprc(session):
         await session.send("请输入正确的参数,输入oprchelp查看帮助")
         return
 
-    if item_id > 6:
+    if item_id > 9:
         if uid in [0, 1]:
             pay_mode = uid
             uid = item_id
@@ -34,8 +34,8 @@ async def oprc(session):
             await session.send("请输入正确的参数,输入oprchelp查看帮助")
             return
     if (
-        (9999_9999 < uid < 3_9999_9999)
-        and (item_id in [0, 1, 2, 3, 4, 5, 6])
+        (9999_9999 < uid < 4_9999_9999)
+        and (item_id in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
         and (pay_mode in [0, 1])
     ):
         # 参数校验成功
@@ -64,8 +64,7 @@ async def oprc(session):
 @sv.on_command("oprchelp", aliases=("oprc帮助"))
 async def oprc_help(session):
     help_info = """
-[Load Success]
-oprc help
+[oprchelp Load Success]
 /oprc item_id uid pay_mode
 arg list:
 [item_id(0),uid,pay_mode(0)] 
@@ -74,7 +73,10 @@ pay_mode:
 0->ali 1->wx
 item_id:
 0->60 1->300...
-but 6->30day card
+but 6->Moon Blessing
+7->Pearl Ji Xing
+8->Song of Pearls
+9->[7 upgrade to 8]
     """.strip()
     img_b64 = await help_img_create(help_info)
     await session.send(f"[CQ:image,file=base64://{img_b64}]", at_sender=True)
